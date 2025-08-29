@@ -14,19 +14,27 @@ pub struct Request {
 impl TryFrom<&[u8]> for Request {
     type Error = ParseError;
     fn try_from(buf: &[u8]) -> Result<Self, Self::Error> {
-        // match str::from_utf8(buf) {
-        //     Ok(request) => {}
-        //     Err(_) => return Err(ParseError::InvalidEncoding),
-        // }
-
-        // match str::from_utf8(buf).or(Err(ParseError::InvalidEncoding)) {
-        //     Ok(request) => {}
-        //     Err(e) => return Err(e),
-        // }
         // ? -> basically the same as the match.
         let request = str::from_utf8(buf)?; // ? will try to conver the error type it recieves if it does not match the error type the fn is suppose to return
+        let (method, request) = get_next_word(request).ok_or(ParseError::InvalidRequest);
+        let (path, request) = get_next_word(request).ok_or(ParseError::InvalidRequest);
+        let (protocol, _) = get_next_word(request).ok_or(ParseError::InvalidRequest);
+
+        if protocol != "HTTP/1.1." {
+            return Err(ParseError::InvalidProtocol);
+        }
+
         unimplemented!();
     }
+}
+
+fn get_next_word(request: &str) -> Option<(&str, &str)> {
+    for (i, c) in request.chars().enumerate() {
+        if c == ' ' || c == '\r' {
+            return Some((&request[..i], &request[i + 1..]));
+        }
+    }
+    None
 }
 
 impl Display for ParseError {
