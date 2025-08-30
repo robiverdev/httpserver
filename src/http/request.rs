@@ -1,3 +1,5 @@
+use crate::http::method::MethodError;
+
 use super::method::Method;
 use std::convert::TryFrom;
 use std::error::Error;
@@ -16,14 +18,15 @@ impl TryFrom<&[u8]> for Request {
     fn try_from(buf: &[u8]) -> Result<Self, Self::Error> {
         // ? -> basically the same as the match.
         let request = str::from_utf8(buf)?; // ? will try to conver the error type it recieves if it does not match the error type the fn is suppose to return
-        let (method, request) = get_next_word(request).ok_or(ParseError::InvalidRequest);
-        let (path, request) = get_next_word(request).ok_or(ParseError::InvalidRequest);
-        let (protocol, _) = get_next_word(request).ok_or(ParseError::InvalidRequest);
+        let (method, request) = get_next_word(request).ok_or(ParseError::InvalidRequest)?;
+        let (path, request) = get_next_word(request).ok_or(ParseError::InvalidRequest)?;
+        let (protocol, _) = get_next_word(request).ok_or(ParseError::InvalidRequest)?;
 
         if protocol != "HTTP/1.1." {
             return Err(ParseError::InvalidProtocol);
         }
 
+        let method: Method = method.parse()?;
         unimplemented!();
     }
 }
@@ -64,6 +67,12 @@ impl ParseError {
             Self::InvalidProtocol => "Invalid Protocol",
             Self::InvalidMethod => "Invalid Method",
         }
+    }
+}
+
+impl From<MethodError> for ParseError {
+    fn from(_: MethodError) -> Self {
+        Self::InvalidMethod
     }
 }
 
