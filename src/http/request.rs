@@ -8,8 +8,8 @@ use std::str;
 use std::str::Utf8Error;
 
 pub struct Request {
-    path: String,
-    query_string: Option<String>,
+    path: &str,
+    query_string: Option<&str>,
     method: Method,
 }
 
@@ -34,7 +34,11 @@ impl TryFrom<&[u8]> for Request {
             path = &path[..i];
         }
 
-        unimplemented!();
+        Ok(Self {
+            path: path.to_string(),
+            query_string,
+            method,
+        })
     }
 }
 
@@ -49,13 +53,13 @@ fn get_next_word(request: &str) -> Option<(&str, &str)> {
 
 impl Display for ParseError {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        write!(f, "{}", self.message());
+        write!(f, "{}", self.message())
     }
 }
 
 impl Debug for ParseError {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
-        write!(f, "{}", self.message());
+        write!(f, "{}", self.message())
     }
 }
 
